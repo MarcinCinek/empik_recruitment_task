@@ -110,7 +110,6 @@ public class CouponServiceImpl implements CouponService {
     }
 
     private void validateNotAlreadyUsed(Coupon coupon, String userId) {
-
         boolean alreadyUsed = couponUsageRepository.existsByCouponIdAndUserId(
                 coupon.getId(),
                 userId
