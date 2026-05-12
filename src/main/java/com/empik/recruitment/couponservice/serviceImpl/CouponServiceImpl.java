@@ -13,14 +13,11 @@ import com.empik.recruitment.couponservice.exception.InvalidCountryException;
 import com.empik.recruitment.couponservice.factory.CouponFactory;
 import com.empik.recruitment.couponservice.geoip.GeoIpService;
 import com.empik.recruitment.couponservice.mapper.CouponMapper;
+import com.empik.recruitment.couponservice.metrics.CouponMetrics;
 import com.empik.recruitment.couponservice.repository.CouponRepository;
 import com.empik.recruitment.couponservice.repository.CouponUsageRepository;
 import com.empik.recruitment.couponservice.service.CouponService;
 import com.empik.recruitment.couponservice.util.CouponCodeNormalizer;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,25 +36,11 @@ public class CouponServiceImpl implements CouponService {
     private final CouponMapper couponMapper;
     private final CouponFactory couponFactory;
 
-    private final MeterRegistry meterRegistry;
-
-    private Counter couponCreatedCounter;
-    private Timer couponUseTimer;
-
-    @PostConstruct
-    private void initMetrics() {
-        this.couponCreatedCounter = Counter.builder("coupon.created")
-                .description("Number of created coupons")
-                .register(meterRegistry);
-
-        this.couponUseTimer = Timer.builder("coupon.use.time")
-                .description("Time of coupon usage flow")
-                .register(meterRegistry);
-    }
+    private final CouponMetrics metrics;
 
     @Override
     public CouponResponse createCoupon(CreateCouponRequest request) {
-        couponCreatedCounter.increment();
+        metrics.incrementCreated();
 
         Coupon coupon = couponFactory.create(request);
         Coupon saved = couponRepository.save(coupon);
@@ -68,25 +51,24 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional
     public UseCouponResponse useCoupon(UseCouponRequest request, String ipAddress) {
-        return couponUseTimer.record(() -> {
-            try {
-                Coupon coupon = getCouponOrThrow(request);
+        try {
+            Coupon coupon = getCouponOrThrow(request);
 
-                validateUseConstraints(coupon, request.userId(), ipAddress);
+            validateUseConstraints(coupon, request.userId(), ipAddress);
 
-                saveUsage(coupon, request.userId());
+            saveUsage(coupon, request.userId());
 
-                incrementUsageOrThrow(coupon);
+            incrementUsageOrThrow(coupon);
 
-                getUsedCounter(geoIpService.resolveCountry(ipAddress)).increment();
+            String country = geoIpService.resolveCountry(ipAddress);
+            metrics.incrementUsed(country);
 
-                return successResponse();
+            return successResponse();
 
-            } catch (RuntimeException ex) {
-                getFailedCounter(ex.getClass().getSimpleName()).increment();
-                throw ex;
-            }
-        });
+        } catch (RuntimeException ex) {
+            metrics.incrementFailed(ex.getClass().getSimpleName());
+            throw ex;
+        }
     }
 
     private Coupon getCouponOrThrow(UseCouponRequest request) {
@@ -144,17 +126,5 @@ public class CouponServiceImpl implements CouponService {
 
     private UseCouponResponse successResponse() {
         return new UseCouponResponse(true, "Coupon successfully used");
-    }
-
-    private Counter getUsedCounter(String country) {
-        return Counter.builder("coupon.used")
-                .tag("country", country)
-                .register(meterRegistry);
-    }
-
-    private Counter getFailedCounter(String reason) {
-        return Counter.builder("coupon.use.failed")
-                .tag("reason", reason)
-                .register(meterRegistry);
     }
 }
