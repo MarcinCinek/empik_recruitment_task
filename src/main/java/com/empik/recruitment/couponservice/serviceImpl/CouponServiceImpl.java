@@ -51,24 +51,18 @@ public class CouponServiceImpl implements CouponService {
     @Override
     @Transactional
     public UseCouponResponse useCoupon(UseCouponRequest request, String ipAddress) {
-        try {
-            Coupon coupon = getCouponOrThrow(request);
+        Coupon coupon = getCouponOrThrow(request);
 
-            validateUseConstraints(coupon, request.userId(), ipAddress);
+        validateUseConstraints(coupon, request.userId(), ipAddress);
 
-            saveUsage(coupon, request.userId());
+        saveUsage(coupon, request.userId());
 
-            incrementUsageOrThrow(coupon);
+        incrementUsageOrThrow(coupon);
 
-            String country = geoIpService.resolveCountry(ipAddress);
-            metrics.incrementUsed(country);
+        String country = geoIpService.resolveCountry(ipAddress);
+        metrics.incrementUsed(country);
 
-            return successResponse();
-
-        } catch (RuntimeException ex) {
-            metrics.incrementFailed(ex.getClass().getSimpleName());
-            throw ex;
-        }
+        return successResponse();
     }
 
     private Coupon getCouponOrThrow(UseCouponRequest request) {
