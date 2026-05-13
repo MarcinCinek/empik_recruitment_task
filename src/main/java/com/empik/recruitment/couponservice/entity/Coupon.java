@@ -7,8 +7,11 @@ import lombok.*;
 
 @Entity
 @Table(
-    name = "coupons",
-    uniqueConstraints = {@UniqueConstraint(columnNames = "code_normalized")})
+        name = "coupons",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "code_normalized")
+        }
+)
 @Getter
 @Setter
 @Builder
@@ -23,7 +26,7 @@ public class Coupon {
   @Column(nullable = false)
   private String code;
 
-  @Column(name = "code_normalized", nullable = false)
+  @Column(name = "code_normalized", nullable = false, updatable = false)
   private String codeNormalized;
 
   @Column(nullable = false)
@@ -33,7 +36,8 @@ public class Coupon {
   private Integer maxUsage;
 
   @Column(nullable = false)
-  private Integer usageCount;
+  @Builder.Default
+  private Integer usageCount = 0;
 
   @Column(nullable = false, length = 2)
   private String countryCode;
