@@ -7,14 +7,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class CouponMapper {
 
-    public CouponResponse toResponse(Coupon coupon) {
-        return new CouponResponse(
-                coupon.getId(),
-                coupon.getCode(),
-                coupon.getCreatedAt(),
-                coupon.getMaxUsage(),
-                coupon.getUsageCount(),
-                coupon.getCountryCode()
-        );
-    }
+  public CouponResponse toResponse(Coupon coupon) {
+    return new CouponResponse(
+        coupon.getId(),
+        coupon.getCode(),
+        coupon.getCreatedAt(),
+        coupon.getMaxUsage(),
+        coupon.getUsageCount(),
+        coupon.getCountryCode());
+  }
 }

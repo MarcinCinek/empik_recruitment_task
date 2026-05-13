@@ -8,8 +8,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 public class CouponServiceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(CouponServiceApplication.class, args);
-	}
-
+  public static void main(String[] args) {
+    SpringApplication.run(CouponServiceApplication.class, args);
+  }
 }

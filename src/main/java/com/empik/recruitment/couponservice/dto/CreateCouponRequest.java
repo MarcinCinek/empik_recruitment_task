@@ -5,15 +5,4 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record CreateCouponRequest(
-
-        @NotBlank
-        String code,
-
-        @NotNull
-        @Positive
-        Integer maxUsage,
-
-        @NotBlank
-        String countryCode
-) {
-}
+    @NotBlank String code, @NotNull @Positive Integer maxUsage, @NotBlank String countryCode) {}

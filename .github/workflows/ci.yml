@@ -2,17 +2,15 @@ name: CI Pipeline
 
 on:
   push:
-    # In this project I mainly use the "main" branch.
+    # In this project I mainly use the "master" branch.
     # Other branches are included only as an example
     # of a typical production CI configuration.
     branches:
-      - main
       - master
       - develop
 
   pull_request:
     branches:
-      - main
       - master
       - develop
 
@@ -34,6 +32,9 @@ jobs:
 
       - name: Grant execute permission for Maven Wrapper
         run: chmod +x mvnw
+
+      - name: Spotless check (code formatting)
+        run: ./mvnw spotless:check
 
       - name: Run tests
         run: ./mvnw clean verify

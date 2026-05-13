@@ -1,4 +1,3 @@
 package com.empik.recruitment.couponservice.exception;
 
-public class CouponLimitReachedException extends RuntimeException {
-}
+public class CouponLimitReachedException extends RuntimeException {}

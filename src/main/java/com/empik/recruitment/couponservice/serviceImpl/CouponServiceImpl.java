@@ -19,106 +19,98 @@ import com.empik.recruitment.couponservice.repository.CouponUsageRepository;
 import com.empik.recruitment.couponservice.service.CouponService;
 import com.empik.recruitment.couponservice.util.CouponCodeNormalizer;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-
-import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
 public class CouponServiceImpl implements CouponService {
 
-    private final CouponRepository couponRepository;
-    private final CouponUsageRepository couponUsageRepository;
-    private final GeoIpService geoIpService;
+  private final CouponRepository couponRepository;
+  private final CouponUsageRepository couponUsageRepository;
+  private final GeoIpService geoIpService;
 
-    private final CouponMapper couponMapper;
-    private final CouponFactory couponFactory;
+  private final CouponMapper couponMapper;
+  private final CouponFactory couponFactory;
 
-    private final CouponMetrics metrics;
+  private final CouponMetrics metrics;
 
-    @Override
-    public CouponResponse createCoupon(CreateCouponRequest request) {
-        metrics.incrementCreated();
+  @Override
+  public CouponResponse createCoupon(CreateCouponRequest request) {
+    metrics.incrementCreated();
 
-        Coupon coupon = couponFactory.create(request);
-        Coupon saved = couponRepository.save(coupon);
+    Coupon coupon = couponFactory.create(request);
+    Coupon saved = couponRepository.save(coupon);
 
-        return couponMapper.toResponse(saved);
+    return couponMapper.toResponse(saved);
+  }
+
+  @Override
+  @Transactional
+  public UseCouponResponse useCoupon(UseCouponRequest request, String ipAddress) {
+    Coupon coupon = getCouponOrThrow(request);
+
+    validateUseConstraints(coupon, request.userId(), ipAddress);
+
+    saveUsage(coupon, request.userId());
+
+    incrementUsageOrThrow(coupon);
+
+    String country = geoIpService.resolveCountry(ipAddress);
+    metrics.incrementUsed(country);
+
+    return successResponse();
+  }
+
+  private Coupon getCouponOrThrow(UseCouponRequest request) {
+    String normalizedCode = CouponCodeNormalizer.normalize(request.couponCode());
+
+    return couponRepository
+        .findByCodeNormalized(normalizedCode)
+        .orElseThrow(CouponNotFoundException::new);
+  }
+
+  private void validateUseConstraints(Coupon coupon, String userId, String ipAddress) {
+    validateCountry(coupon, ipAddress);
+    validateNotAlreadyUsed(coupon, userId);
+  }
+
+  private void validateCountry(Coupon coupon, String ipAddress) {
+    String requestCountry = geoIpService.resolveCountry(ipAddress);
+
+    if (!coupon.getCountryCode().equalsIgnoreCase(requestCountry)) {
+      throw new InvalidCountryException();
     }
+  }
 
-    @Override
-    @Transactional
-    public UseCouponResponse useCoupon(UseCouponRequest request, String ipAddress) {
-        Coupon coupon = getCouponOrThrow(request);
+  private void validateNotAlreadyUsed(Coupon coupon, String userId) {
+    boolean alreadyUsed = couponUsageRepository.existsByCouponIdAndUserId(coupon.getId(), userId);
 
-        validateUseConstraints(coupon, request.userId(), ipAddress);
-
-        saveUsage(coupon, request.userId());
-
-        incrementUsageOrThrow(coupon);
-
-        String country = geoIpService.resolveCountry(ipAddress);
-        metrics.incrementUsed(country);
-
-        return successResponse();
+    if (alreadyUsed) {
+      throw new CouponAlreadyUsedException();
     }
+  }
 
-    private Coupon getCouponOrThrow(UseCouponRequest request) {
-        String normalizedCode = CouponCodeNormalizer.normalize(request.couponCode());
-
-        return couponRepository.findByCodeNormalized(normalizedCode)
-                .orElseThrow(CouponNotFoundException::new);
+  private void saveUsage(Coupon coupon, String userId) {
+    try {
+      couponUsageRepository.save(
+          CouponUsage.builder().coupon(coupon).userId(userId).usedAt(Instant.now()).build());
+    } catch (DataIntegrityViolationException e) {
+      throw new CouponAlreadyUsedException();
     }
+  }
 
-    private void validateUseConstraints(Coupon coupon, String userId, String ipAddress) {
-        validateCountry(coupon, ipAddress);
-        validateNotAlreadyUsed(coupon, userId);
+  private void incrementUsageOrThrow(Coupon coupon) {
+    int updatedRows = couponRepository.incrementUsage(coupon.getId());
+
+    if (updatedRows == 0) {
+      throw new CouponLimitReachedException();
     }
+  }
 
-    private void validateCountry(Coupon coupon, String ipAddress) {
-        String requestCountry = geoIpService.resolveCountry(ipAddress);
-
-        if (!coupon.getCountryCode().equalsIgnoreCase(requestCountry)) {
-            throw new InvalidCountryException();
-        }
-    }
-
-    private void validateNotAlreadyUsed(Coupon coupon, String userId) {
-        boolean alreadyUsed = couponUsageRepository.existsByCouponIdAndUserId(
-                coupon.getId(),
-                userId
-        );
-
-        if (alreadyUsed) {
-            throw new CouponAlreadyUsedException();
-        }
-    }
-
-    private void saveUsage(Coupon coupon, String userId) {
-        try {
-            couponUsageRepository.save(
-                    CouponUsage.builder()
-                            .coupon(coupon)
-                            .userId(userId)
-                            .usedAt(Instant.now())
-                            .build()
-            );
-        } catch (DataIntegrityViolationException e) {
-            throw new CouponAlreadyUsedException();
-        }
-    }
-
-    private void incrementUsageOrThrow(Coupon coupon) {
-        int updatedRows = couponRepository.incrementUsage(coupon.getId());
-
-        if (updatedRows == 0) {
-            throw new CouponLimitReachedException();
-        }
-    }
-
-    private UseCouponResponse successResponse() {
-        return new UseCouponResponse(true, "Coupon successfully used");
-    }
+  private UseCouponResponse successResponse() {
+    return new UseCouponResponse(true, "Coupon successfully used");
+  }
 }

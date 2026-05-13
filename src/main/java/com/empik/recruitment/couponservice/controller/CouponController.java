@@ -13,19 +13,19 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CouponController {
 
-    private final CouponService couponService;
+  private final CouponService couponService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CouponResponse createCoupon(@Valid @RequestBody CreateCouponRequest request) {
-        return couponService.createCoupon(request);
-    }
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public CouponResponse createCoupon(@Valid @RequestBody CreateCouponRequest request) {
+    return couponService.createCoupon(request);
+  }
 
-    @PostMapping("/use")
-    public UseCouponResponse useCoupon(
-            @Valid @RequestBody UseCouponRequest request, HttpServletRequest httpServletRequest) {
-        String ipAddress = httpServletRequest.getRemoteAddr();
+  @PostMapping("/use")
+  public UseCouponResponse useCoupon(
+      @Valid @RequestBody UseCouponRequest request, HttpServletRequest httpServletRequest) {
+    String ipAddress = httpServletRequest.getRemoteAddr();
 
-        return couponService.useCoupon(request, ipAddress);
-    }
+    return couponService.useCoupon(request, ipAddress);
+  }
 }
