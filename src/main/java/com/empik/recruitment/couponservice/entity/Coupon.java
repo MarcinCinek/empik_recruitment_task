@@ -7,11 +7,8 @@ import lombok.*;
 
 @Entity
 @Table(
-        name = "coupons",
-        uniqueConstraints = {
-                @UniqueConstraint(columnNames = "code_normalized")
-        }
-)
+    name = "coupons",
+    uniqueConstraints = {@UniqueConstraint(columnNames = "code_normalized")})
 @Getter
 @Setter
 @Builder
