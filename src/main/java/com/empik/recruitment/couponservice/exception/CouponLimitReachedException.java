@@ -1,3 +1,15 @@
 package com.empik.recruitment.couponservice.exception;
 
-public class CouponLimitReachedException extends RuntimeException {}
+import lombok.Getter;
+
+@Getter
+public class CouponLimitReachedException extends RuntimeException {
+  private final String userId;
+  private final String couponCode;
+
+  public CouponLimitReachedException(String userId, String couponCode) {
+
+    this.userId = userId;
+    this.couponCode = couponCode;
+  }
+}

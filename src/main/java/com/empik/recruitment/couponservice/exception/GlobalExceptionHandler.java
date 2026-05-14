@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(CouponNotFoundException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public ErrorResponse handleCouponNotFound(CouponNotFoundException ex) {
-    log.error("Coupon not found", ex);
+    log.error("Coupon not found [userId={}, coupon={}]", ex.getUserId(), ex.getCouponCode());
     metrics.incrementFailed(FailureReason.COUPON_NOT_FOUND.key());
 
     return new ErrorResponse(Instant.now(), 404, "Coupon not found");
@@ -31,7 +31,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(CouponAlreadyUsedException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
   public ErrorResponse handleAlreadyUsed(CouponAlreadyUsedException ex) {
-    log.warn("Coupon already used", ex);
+    log.warn("Coupon already used [userId={}, coupon={}]", ex.getUserId(), ex.getCouponCode());
     metrics.incrementFailed(FailureReason.ALREADY_USED.key());
 
     return new ErrorResponse(Instant.now(), 409, "Coupon already used");
@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(CouponLimitReachedException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
   public ErrorResponse handleLimitReached(CouponLimitReachedException ex) {
-    log.warn("Coupon limit reached", ex);
+    log.warn("Coupon limit reached [userId={}, coupon={}]", ex.getUserId(), ex.getCouponCode());
     metrics.incrementFailed(FailureReason.LIMIT_REACHED.key());
 
     return new ErrorResponse(Instant.now(), 409, "Coupon usage limit reached");
@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(InvalidCountryException.class)
   @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
   public ErrorResponse handleInvalidCountry(InvalidCountryException ex) {
-    log.warn("Invalid country", ex);
+    log.warn("Invalid country for user [userId={}]", ex.getUserId());
     metrics.incrementFailed(FailureReason.INVALID_COUNTRY.key());
 
     return new ErrorResponse(Instant.now(), 422, "Coupon cannot be used in your country");

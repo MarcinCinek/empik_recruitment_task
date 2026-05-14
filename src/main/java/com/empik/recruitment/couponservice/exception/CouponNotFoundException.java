@@ -1,3 +1,15 @@
 package com.empik.recruitment.couponservice.exception;
 
-public class CouponNotFoundException extends RuntimeException {}
+import lombok.Getter;
+
+@Getter
+public class CouponNotFoundException extends RuntimeException {
+  private final String userId;
+  private final String couponCode;
+
+  public CouponNotFoundException(String userId, String couponCode) {
+
+    this.userId = userId;
+    this.couponCode = couponCode;
+  }
+}

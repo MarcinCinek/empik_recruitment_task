@@ -52,7 +52,8 @@ class GlobalExceptionHandlerTest {
   @Test
   void shouldReturn404_whenCouponNotFound() throws Exception {
 
-    when(couponService.useCoupon(any(), anyString())).thenThrow(new CouponNotFoundException());
+    when(couponService.useCoupon(any(), anyString()))
+        .thenThrow(new CouponNotFoundException("user123", "TEST"));
 
     mockMvc
         .perform(post("/test/use"))
@@ -65,7 +66,8 @@ class GlobalExceptionHandlerTest {
   @Test
   void shouldReturn409_whenAlreadyUsed() throws Exception {
 
-    when(couponService.useCoupon(any(), anyString())).thenThrow(new CouponAlreadyUsedException());
+    when(couponService.useCoupon(any(), anyString()))
+        .thenThrow(new CouponAlreadyUsedException("user123", "TEST"));
 
     mockMvc
         .perform(post("/test/use"))
@@ -78,7 +80,8 @@ class GlobalExceptionHandlerTest {
   @Test
   void shouldReturn409_whenLimitReached() throws Exception {
 
-    when(couponService.useCoupon(any(), anyString())).thenThrow(new CouponLimitReachedException());
+    when(couponService.useCoupon(any(), anyString()))
+        .thenThrow(new CouponLimitReachedException("user123", "TEST"));
 
     mockMvc
         .perform(post("/test/use"))
@@ -91,7 +94,8 @@ class GlobalExceptionHandlerTest {
   @Test
   void shouldReturn422_whenInvalidCountry() throws Exception {
 
-    when(couponService.useCoupon(any(), anyString())).thenThrow(new InvalidCountryException());
+    when(couponService.useCoupon(any(), anyString()))
+        .thenThrow(new InvalidCountryException("user123"));
 
     mockMvc
         .perform(post("/test/use"))

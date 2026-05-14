@@ -50,13 +50,15 @@ public class CouponServiceImpl implements CouponService {
   @Override
   @Transactional
   public UseCouponResponse useCoupon(UseCouponRequest request, String ipAddress) {
-    Coupon coupon = getCouponOrThrow(request);
+    String userId = request.userId();
 
-    validateUseConstraints(coupon, request.userId(), ipAddress);
+    Coupon coupon = getCouponOrThrow(userId, request.couponCode());
 
-    saveUsage(coupon, request.userId());
+    validateUseConstraints(coupon, userId, ipAddress);
 
-    incrementUsageOrThrow(coupon);
+    saveUsage(coupon, userId);
+
+    incrementUsageOrThrow(coupon, userId);
 
     String country = geoIpService.resolveCountry(ipAddress);
     metrics.incrementUsed(country);
@@ -64,24 +66,24 @@ public class CouponServiceImpl implements CouponService {
     return successResponse();
   }
 
-  private Coupon getCouponOrThrow(UseCouponRequest request) {
-    String normalizedCode = CouponCodeNormalizer.normalize(request.couponCode());
+  private Coupon getCouponOrThrow(String userId, String couponCode) {
+    String normalizedCode = CouponCodeNormalizer.normalize(couponCode);
 
     return couponRepository
         .findByCodeNormalized(normalizedCode)
-        .orElseThrow(CouponNotFoundException::new);
+        .orElseThrow(() -> new CouponNotFoundException(userId, couponCode));
   }
 
   private void validateUseConstraints(Coupon coupon, String userId, String ipAddress) {
-    validateCountry(coupon, ipAddress);
+    validateCountry(coupon, ipAddress, userId);
     validateNotAlreadyUsed(coupon, userId);
   }
 
-  private void validateCountry(Coupon coupon, String ipAddress) {
+  private void validateCountry(Coupon coupon, String ipAddress, String userId) {
     String requestCountry = geoIpService.resolveCountry(ipAddress);
 
     if (!coupon.getCountryCode().equalsIgnoreCase(requestCountry)) {
-      throw new InvalidCountryException();
+      throw new InvalidCountryException(userId);
     }
   }
 
@@ -89,7 +91,7 @@ public class CouponServiceImpl implements CouponService {
     boolean alreadyUsed = couponUsageRepository.existsByCouponIdAndUserId(coupon.getId(), userId);
 
     if (alreadyUsed) {
-      throw new CouponAlreadyUsedException();
+      throw new CouponAlreadyUsedException(userId, coupon.getCode());
     }
   }
 
@@ -98,15 +100,15 @@ public class CouponServiceImpl implements CouponService {
       couponUsageRepository.save(
           CouponUsage.builder().coupon(coupon).userId(userId).usedAt(Instant.now()).build());
     } catch (DataIntegrityViolationException e) {
-      throw new CouponAlreadyUsedException();
+      throw new CouponAlreadyUsedException(userId, coupon.getCode());
     }
   }
 
-  private void incrementUsageOrThrow(Coupon coupon) {
+  private void incrementUsageOrThrow(Coupon coupon, String userId) {
     int updatedRows = couponRepository.incrementUsage(coupon.getId());
 
     if (updatedRows == 0) {
-      throw new CouponLimitReachedException();
+      throw new CouponLimitReachedException(userId, coupon.getCode());
     }
   }
 
