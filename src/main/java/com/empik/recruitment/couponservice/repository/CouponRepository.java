@@ -8,8 +8,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface CouponRepository extends JpaRepository<Coupon, UUID> {
 
-  Optional<Coupon> findByCodeNormalized(String codeNormalized);
-
   @Modifying
   @Query(
       """
@@ -19,4 +17,8 @@ public interface CouponRepository extends JpaRepository<Coupon, UUID> {
           AND c.usageCount < c.maxUsage
     """)
   int incrementUsage(@Param("couponId") UUID couponId);
+
+  Optional<Coupon> findByCodeNormalized(String codeNormalized);
+
+  boolean existsByCodeNormalized(String codeNormalized);
 }

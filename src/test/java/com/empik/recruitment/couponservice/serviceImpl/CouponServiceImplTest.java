@@ -7,10 +7,7 @@ import static org.mockito.Mockito.*;
 import com.empik.recruitment.couponservice.dto.UseCouponRequest;
 import com.empik.recruitment.couponservice.entity.Coupon;
 import com.empik.recruitment.couponservice.exception.*;
-import com.empik.recruitment.couponservice.factory.CouponFactory;
 import com.empik.recruitment.couponservice.geoip.GeoIpService;
-import com.empik.recruitment.couponservice.mapper.CouponMapper;
-import com.empik.recruitment.couponservice.metrics.CouponMetrics;
 import com.empik.recruitment.couponservice.repository.CouponRepository;
 import com.empik.recruitment.couponservice.repository.CouponUsageRepository;
 import java.util.Optional;
@@ -29,9 +26,6 @@ class CouponServiceImplTest {
   @Mock private CouponRepository couponRepository;
   @Mock private CouponUsageRepository couponUsageRepository;
   @Mock private GeoIpService geoIpService;
-  @Mock private CouponMapper couponMapper;
-  @Mock private CouponFactory couponFactory;
-  @Mock private CouponMetrics metrics;
 
   private Coupon coupon;
 

@@ -91,6 +91,33 @@ class CouponServiceIntegrationTest {
   }
 
   @Test
+  void shouldRejectDuplicateCouponWithSameNormalizedCode() {
+
+    couponRepository.saveAndFlush(
+        Coupon.builder()
+            .code("WIOSNA")
+            .codeNormalized("WIOSNA")
+            .createdAt(Instant.now())
+            .maxUsage(10)
+            .usageCount(0)
+            .countryCode("PL")
+            .build());
+
+    Coupon duplicate =
+        Coupon.builder()
+            .code("wIoSnA")
+            .codeNormalized("WIOSNA")
+            .createdAt(Instant.now())
+            .maxUsage(5)
+            .usageCount(0)
+            .countryCode("PL")
+            .build();
+
+    assertThrows(
+        DataIntegrityViolationException.class, () -> couponRepository.saveAndFlush(duplicate));
+  }
+
+  @Test
   void shouldTreatCouponCodeAsCaseInsensitive() {
 
     Coupon coupon =

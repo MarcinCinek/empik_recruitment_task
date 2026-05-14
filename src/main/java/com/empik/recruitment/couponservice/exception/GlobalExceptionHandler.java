@@ -28,6 +28,17 @@ public class GlobalExceptionHandler {
     return new ErrorResponse(Instant.now(), 404, "Coupon not found");
   }
 
+  @ExceptionHandler(CouponDuplicateException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public ErrorResponse handleDuplicateCoupon(CouponDuplicateException ex) {
+
+    log.warn("Coupon already exists[coupon={}]", ex.getCode());
+
+    metrics.incrementFailed(FailureReason.ALREADY_USED.key());
+
+    return new ErrorResponse(Instant.now(), 409, "Coupon already exists");
+  }
+
   @ExceptionHandler(CouponAlreadyUsedException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
   public ErrorResponse handleAlreadyUsed(CouponAlreadyUsedException ex) {

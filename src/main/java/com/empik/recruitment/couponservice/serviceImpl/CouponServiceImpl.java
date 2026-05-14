@@ -6,10 +6,7 @@ import com.empik.recruitment.couponservice.dto.UseCouponRequest;
 import com.empik.recruitment.couponservice.dto.UseCouponResponse;
 import com.empik.recruitment.couponservice.entity.Coupon;
 import com.empik.recruitment.couponservice.entity.CouponUsage;
-import com.empik.recruitment.couponservice.exception.CouponAlreadyUsedException;
-import com.empik.recruitment.couponservice.exception.CouponLimitReachedException;
-import com.empik.recruitment.couponservice.exception.CouponNotFoundException;
-import com.empik.recruitment.couponservice.exception.InvalidCountryException;
+import com.empik.recruitment.couponservice.exception.*;
 import com.empik.recruitment.couponservice.factory.CouponFactory;
 import com.empik.recruitment.couponservice.geoip.GeoIpService;
 import com.empik.recruitment.couponservice.mapper.CouponMapper;
@@ -39,10 +36,17 @@ public class CouponServiceImpl implements CouponService {
 
   @Override
   public CouponResponse createCoupon(CreateCouponRequest request) {
-    metrics.incrementCreated();
+
+    String normalized = CouponCodeNormalizer.normalize(request.code());
+
+    if (couponRepository.existsByCodeNormalized(normalized)) {
+      throw new CouponDuplicateException(normalized);
+    }
 
     Coupon coupon = couponFactory.create(request);
     Coupon saved = couponRepository.save(coupon);
+
+    metrics.incrementCreated();
 
     return couponMapper.toResponse(saved);
   }
