@@ -16,6 +16,12 @@ import com.empik.recruitment.couponservice.repository.CouponRepository;
 import com.empik.recruitment.couponservice.repository.CouponUsageRepository;
 import com.empik.recruitment.couponservice.service.CouponService;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -208,5 +214,80 @@ class CouponServiceIntegrationTest {
                     .usageCount(0)
                     .countryCode("PL")
                     .build()));
+  }
+
+  @Test
+  void shouldAllowOnlyMaxUsage_whenMultipleUsersUseCouponSimultaneously() throws Exception {
+
+    couponRepository.saveAndFlush(
+        Coupon.builder()
+            .code("CONCURRENT")
+            .codeNormalized("CONCURRENT")
+            .createdAt(Instant.now())
+            .maxUsage(3)
+            .usageCount(0)
+            .countryCode("PL")
+            .build());
+
+    when(geoIpService.resolveCountry(anyString())).thenReturn("PL");
+
+    int users = 10;
+
+    ExecutorService executor = Executors.newFixedThreadPool(users);
+
+    CountDownLatch ready = new CountDownLatch(users);
+
+    CountDownLatch start = new CountDownLatch(1);
+
+    List<Future<Boolean>> results =
+        IntStream.range(0, users)
+            .mapToObj(id -> executor.submit(createCouponTask(id, ready, start)))
+            .toList();
+
+    ready.await();
+
+    start.countDown();
+
+    long successCount = countSuccessfulResults(results);
+
+    Coupon updated = couponRepository.findByCodeNormalized("CONCURRENT").orElseThrow();
+
+    assertEquals(3, successCount);
+    assertEquals(3, updated.getUsageCount());
+
+    executor.shutdown();
+  }
+
+  private java.util.concurrent.Callable<Boolean> createCouponTask(
+      int userId, CountDownLatch ready, CountDownLatch start) {
+
+    return () -> {
+      ready.countDown();
+      start.await();
+
+      try {
+        couponService.useCoupon(new UseCouponRequest("CONCURRENT", "user-" + userId), "127.0.0.1");
+
+        return true;
+
+      } catch (CouponLimitReachedException e) {
+        return false;
+      }
+    };
+  }
+
+  private long countSuccessfulResults(List<Future<Boolean>> results) {
+
+    return results.stream()
+        .map(
+            future -> {
+              try {
+                return future.get();
+              } catch (Exception e) {
+                throw new RuntimeException(e);
+              }
+            })
+        .filter(Boolean::booleanValue)
+        .count();
   }
 }
