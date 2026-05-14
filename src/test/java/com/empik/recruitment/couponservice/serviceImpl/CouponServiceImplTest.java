@@ -8,6 +8,7 @@ import com.empik.recruitment.couponservice.dto.UseCouponRequest;
 import com.empik.recruitment.couponservice.entity.Coupon;
 import com.empik.recruitment.couponservice.exception.*;
 import com.empik.recruitment.couponservice.geoip.GeoIpService;
+import com.empik.recruitment.couponservice.metrics.CouponMetrics;
 import com.empik.recruitment.couponservice.repository.CouponRepository;
 import com.empik.recruitment.couponservice.repository.CouponUsageRepository;
 import java.util.Optional;
@@ -26,6 +27,7 @@ class CouponServiceImplTest {
   @Mock private CouponRepository couponRepository;
   @Mock private CouponUsageRepository couponUsageRepository;
   @Mock private GeoIpService geoIpService;
+  @Mock private CouponMetrics metrics;
 
   private Coupon coupon;
 
@@ -108,6 +110,7 @@ class CouponServiceImplTest {
 
   @Test
   void shouldNormalizeCodeCaseInsensitive() {
+
     // given
     when(couponRepository.findByCodeNormalized("WIOSNA")).thenReturn(Optional.of(coupon));
 
@@ -124,5 +127,6 @@ class CouponServiceImplTest {
     assertTrue(result.success());
 
     verify(couponRepository).findByCodeNormalized("WIOSNA");
+    verify(metrics).incrementUsed("PL");
   }
 }
