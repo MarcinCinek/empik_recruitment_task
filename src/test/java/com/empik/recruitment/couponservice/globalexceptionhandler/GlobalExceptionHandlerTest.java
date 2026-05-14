@@ -40,10 +40,7 @@ class GlobalExceptionHandlerTest {
   void shouldReturn400_whenValidationFails() throws Exception {
 
     mockMvc
-        .perform(
-            post("/test/validate")
-                .contentType("application/json")
-                .content("{}"))
+        .perform(post("/test/validate").contentType("application/json").content("{}"))
         .andExpect(status().isBadRequest())
         .andExpect(
             jsonPath("$.message")
