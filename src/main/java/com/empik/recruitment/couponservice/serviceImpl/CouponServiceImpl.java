@@ -67,7 +67,7 @@ public class CouponServiceImpl implements CouponService {
     String country = geoIpService.resolveCountry(ipAddress);
     metrics.incrementUsed(country);
 
-    return successResponse();
+    return successResponse(userId, coupon.getCode());
   }
 
   private Coupon getCouponOrThrow(String userId, String couponCode) {
@@ -116,7 +116,8 @@ public class CouponServiceImpl implements CouponService {
     }
   }
 
-  private UseCouponResponse successResponse() {
-    return new UseCouponResponse(true, "Coupon successfully used");
+  private UseCouponResponse successResponse(String userId, String couponCode) {
+    return new UseCouponResponse(
+        true, String.format("Coupon successfully used [userId=%s, coupon=%s]", userId, couponCode));
   }
 }

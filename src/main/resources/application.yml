@@ -18,7 +18,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   geoip:
-    localhost-enabled: false
+    localhost-enabled: true
 
   flyway:
     enabled: true

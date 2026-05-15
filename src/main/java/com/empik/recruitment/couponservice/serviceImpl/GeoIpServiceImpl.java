@@ -12,7 +12,7 @@ public class GeoIpServiceImpl implements GeoIpService {
 
   private final IpApiClient ipApiClient;
 
-  @Value("${geoip.localhost-enabled:false}")
+  @Value("${geoip.localhost-enabled:true}")
   private boolean localhostEnabled;
 
   public GeoIpServiceImpl(IpApiClient ipApiClient) {
@@ -24,17 +24,21 @@ public class GeoIpServiceImpl implements GeoIpService {
   @Override
   public String resolveCountry(String ipAddress) {
 
-    if (localhostEnabled
-        && LOCALHOST_IPS.contains(ipAddress)) { // I only use this in the local environment
-      return "PL"; // because we don't have normal IP
+    if (localhostEnabled && LOCALHOST_IPS.contains(ipAddress)) {
+      return "PL";
     }
 
-    IpApiResponse response = ipApiClient.getIpDetails(ipAddress, "status,countryCode");
+    try {
+      IpApiResponse response = ipApiClient.getIpDetails(ipAddress, "status,countryCode");
 
-    if (!"success".equalsIgnoreCase(response.status())) {
-      throw new RuntimeException("Failed to resolve IP: " + ipAddress);
+      if (response == null || !"success".equalsIgnoreCase(response.status())) {
+        throw new RuntimeException("Failed to resolve IP: " + ipAddress);
+      }
+
+      return response.countryCode();
+
+    } catch (Exception ex) {
+      throw new RuntimeException("IP API call failed for ip=" + ipAddress, ex);
     }
-
-    return response.countryCode();
   }
 }

@@ -2,6 +2,3 @@ spring:
   config:
     activate:
       on-profile: local
-
-geoip:
-  localhost-enabled: true
