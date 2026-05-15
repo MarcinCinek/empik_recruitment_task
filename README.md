@@ -74,7 +74,7 @@ This should build the Docker image and run our application. After this, we can c
 
 The application has two main endpoints: one for creating coupons and the other for redeeming coupons. These endpoints are located in Swager on specific paths. I used the Postman application for my testing.
 
-# For the endpoint using IP verification, I used IP API. It's a free tool for checking IP locations.
+### For the endpoint using IP verification, I used IP API. It's a free tool for checking IP locations.
 
 Here's the website and the endpoint it uses for IP verification:
 
@@ -101,7 +101,7 @@ Both unit and integration tests have been added to the application. I decided to
 
 Currently, the most important test verifying the atomicity of my solution is located in the integration package, test section. It is called: shouldAllowOnlyMaxUsage_whenMultipleUsersUseCouponSimultaneously.
 
-# I invite you to take a deeper look at this test, as it is one of the most important tests :)
+### I invite you to take a deeper look at this test, as it is one of the most important tests :)
 
 -------------------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +128,7 @@ I've also added a pipeline to the app (very preliminary). It only verifies the b
 - coupon usage, e.g., with the code "PL," is limited to users from that country
 - feedback if the coupon has already been used, the coupon no longer exists, or the user has already used their coupon.
 
-# I added some photos to the photos folder from Postman during my local tests. Check them out :)
+### I added some photos to the photos folder from Postman during my local tests. Check them out :)
 
 
 
