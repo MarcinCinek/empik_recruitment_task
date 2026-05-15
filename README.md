@@ -3,6 +3,7 @@
 ## Backend
 
 * Java 21
+* Maven (I use 3.9.15)
 * Spring Boot 4.0.6
 * Spring MVC
 * Spring Data JPA
@@ -17,7 +18,7 @@
 ## Validation & Documentation
 
 * Jakarta Bean Validation
-* Swagger / OpenAPI (`springdoc-openapi`) - http://localhost:8080/swagger-ui.html
+* Swagger - http://localhost:8080/swagger-ui.html
 
 ## Monitoring
 
@@ -56,4 +57,18 @@ I've read that large companies/corporations use the tokenization approach for th
 etc....
 
 This solution is particularly effective because we have 100,000 records for the same discount code in the table. When a user uses a coupon, they query the application, and the application searches the table for the associated discount code. If one isn't available, the appropriate information is returned. This is certainly a better approach because it doesn't lock a specific record in the database, but as I mentioned, I didn't want to overengineer and over-implement (as I mentioned, this solution is for much more advanced systems – and the task text allowed for flexibility).
+
+-----------------------------------------------------------------------------------------------------------------------
+
+## How to run an application on Docker
+
+Using a window in intellij (it should also work in a regular terminal) on the main root of the project, execute the command:
+- mvn clean package
+- docker-compose up --build
+
+This should build the Docker image and run our application. After this, we can check if Swagger is working:
+- http://localhost:8080/swagger-ui/index.html
+
+-------------------------------------------------------------------------------------------------------------------------
+
 
